@@ -15,21 +15,11 @@ uint8_t rand8(void)
 
 #define MAX_SPRITES 40
 #define FOOD_SPRITE_INDEX 39
-#define MAX_SNAKE 360 // 39 segments max
+#define MAX_SNAKE (FOOD_SPRITE_INDEX) // 39 segments max
 
 #define FRAME_DELAY 6 // frames between movement steps
 
 // ========== TILE DATA ==========
-const uint8_t tile_empty[16] = {
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00,
-    0x00, 0x00};
-
 const uint8_t tile_filled[16] = {
     0xFF, 0x00,
     0xFF, 0x00,
@@ -40,22 +30,10 @@ const uint8_t tile_filled[16] = {
     0xFF, 0x00,
     0xFF, 0x00};
 
-const uint8_t food_tile[16] = {
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF,
-    0xFF, 0xFF};
-
 // ========== GAME STATE ==========
 uint8_t snake_x[MAX_SNAKE];
 uint8_t snake_y[MAX_SNAKE];
-uint16_t snake_len;
-uint8_t old_snake_pos_x;
-uint8_t old_snake_pos_y;
+uint8_t snake_len;
 
 enum
 {
@@ -69,12 +47,6 @@ uint8_t dir = DIR_RIGHT;
 uint8_t food_x, food_y;
 
 // ========== UTILITY FUNCTIONS ==========
-void clear_playspace()
-{
-    for(uint8_t i = 0; i < GRID_H; i++)
-        for(uint8_t j = 0; j < GRID_W; j++)
-            set_bkg_tile_xy(j, i, 1);
-}
 
 void place_sprite_on_grid(uint8_t index, uint8_t gx, uint8_t gy)
 {
@@ -91,14 +63,6 @@ void place_food_random()
     place_sprite_on_grid(FOOD_SPRITE_INDEX, food_x, food_y);
 }
 
-uint8_t is_snake_body(uint8_t x, uint8_t y)
-{
-    for(uint8_t i = 0; i < snake_len; i++)
-        if(snake_x[i] == x && snake_y[i] == y)
-            return 1;
-    return 0;
-}
-
 // setup snake in center
 void init_snake()
 {
@@ -113,35 +77,19 @@ void init_snake()
     dir = DIR_RIGHT;
 }
 
-void draw_snake_head_tail()
-{
-    if(!is_snake_body(old_snake_pos_x, old_snake_pos_y))
-        set_bkg_tile_xy(old_snake_pos_x, old_snake_pos_y, 1);
-    set_bkg_tile_xy(snake_x[snake_len - 1], snake_y[snake_len - 1], 0);
-}
-
 // draw all segments
 void draw_snake()
 {
     for (uint8_t i = 0; i < snake_len; ++i)
     {
-        set_bkg_tile_xy(snake_x[i], snake_y[i], 0);
-    }
-    /*
-    for (uint8_t i = 0; i < snake_len; ++i)
-    {
         set_sprite_tile(i, 0);
         place_sprite_on_grid(i, snake_x[i], snake_y[i]);
     }
-        */
 }
 
 // update snake position + wrapping
 void update_snake_position()
 {
-    old_snake_pos_x = snake_x[0];
-    old_snake_pos_y = snake_y[0];
-
     for (uint8_t i = 0; i < snake_len - 1; ++i)
     {
         snake_x[i] = snake_x[i + 1];
@@ -205,10 +153,7 @@ void main(void)
 {
     rng_state = DIV_REG; // seed RNG with hardware divider
 
-    set_sprite_data(0, 1, food_tile);
-
-    set_bkg_data(0, 1, tile_filled);
-    set_bkg_data(1, 1, tile_empty);
+    set_sprite_data(0, 1, tile_filled);
 
     for (uint8_t i = 0; i < MAX_SPRITES; ++i)
     {
@@ -217,7 +162,6 @@ void main(void)
     }
 
     SHOW_SPRITES;
-    SHOW_BKG;
     DISPLAY_ON;
 
     init_snake();
@@ -227,7 +171,6 @@ void main(void)
 
     uint16_t frame_counter = 0;
 
-    clear_playspace();
     while (1)
     {
         wait_vbl_done();
@@ -247,7 +190,7 @@ void main(void)
                 place_food_random();
             }
 
-            draw_snake_head_tail();
+            draw_snake();
         }
     }
 }
